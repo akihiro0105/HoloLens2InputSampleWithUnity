@@ -1,0 +1,2 @@
+# HoloLens2InputSampleWithUnity
+Unityから利用できるHoloLens 2の入力情報取得サンプル
