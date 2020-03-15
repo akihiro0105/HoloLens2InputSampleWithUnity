@@ -26,24 +26,20 @@ public class HoloLens2IntractionManager : MonoBehaviour
     private void InteractionManager_InteractionSourceUpdated(InteractionSourceUpdatedEventArgs obj)
     {
         // Update
-        var positionAccuracy = obj.state.sourcePose.positionAccuracy;
-        if (positionAccuracy == InteractionSourcePositionAccuracy.High)
+        var handedness = obj.state.source.handedness;
+        Vector3 pos;
+        Quaternion rot;
+        if (obj.state.sourcePose.TryGetPosition(out pos))
         {
-            var handedness = obj.state.source.handedness;
-            Vector3 pos;
-            Quaternion rot;
-            if (obj.state.sourcePose.TryGetPosition(out pos))
+            if (obj.state.sourcePose.TryGetRotation(out rot))
             {
-                if (obj.state.sourcePose.TryGetRotation(out rot))
+                if (handedness == InteractionSourceHandedness.Right)
                 {
-                    if (handedness == InteractionSourceHandedness.Right)
-                    {
-                        rightHand.SetPositionAndRotation(pos, rot);
-                    }
-                    else if (handedness == InteractionSourceHandedness.Left)
-                    {
-                        leftHand.SetPositionAndRotation(pos, rot);
-                    }
+                    rightHand.SetPositionAndRotation(pos, rot);
+                }
+                else if (handedness == InteractionSourceHandedness.Left)
+                {
+                    leftHand.SetPositionAndRotation(pos, rot);
                 }
             }
         }

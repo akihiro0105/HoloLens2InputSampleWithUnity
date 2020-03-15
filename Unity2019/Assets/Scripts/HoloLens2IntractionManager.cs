@@ -1,13 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.XR.Interaction;
-using UnityEngine.SpatialTracking;
-using UnityEngine.XR;
 
-using UnityEngine.XR.InteractionSubsystems;
-using UnityEngine.XR.Management;
-using UnityEngine.XR.WindowsMR;
+#if WINDOWS_UWP
+using Windows.UI.Input.Spatial;
+#endif
 
 public class HoloLens2IntractionManager : MonoBehaviour
 {
@@ -19,40 +16,49 @@ public class HoloLens2IntractionManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        var manager=XRGeneralSettings.Instance.Manager;
-        if (manager==null)
+#if WINDOWS_UWP
+        SpatialInteractionManager spatialInteraction = null;
+        UnityEngine.WSA.Application.InvokeOnUIThread(() =>
         {
-            Debug.LogError("No Manager");
-        }
-        else
+            spatialInteraction = SpatialInteractionManager.GetForCurrentView();
+        }, true);
+        spatialInteraction.SourcePressed += SpatialInteraction_SourcePressed;
+        spatialInteraction.SourceReleased += SpatialInteraction_SourceReleased;
+#endif
+    }
+
+#if WINDOWS_UWP
+
+    private void SpatialInteraction_SourceReleased(SpatialInteractionManager sender, SpatialInteractionSourceEventArgs args)
+    {
+        var item = args.State;
+        UnityEngine.WSA.Application.InvokeOnAppThread(() =>
         {
-            var loader = manager.activeLoader;
-            if (loader == null)
+            if (item.Source.Handedness == SpatialInteractionSourceHandedness.Right)
             {
-                Debug.LogError("No Loader");
+                rightChildHand.localScale = Vector3.one;
             }
-        }
-
-        var gesture = GetComponent<WindowsMRGestures>();
-        gesture.onTappedChanged += Gesture_onTappedChanged;
+            else if (item.Source.Handedness == SpatialInteractionSourceHandedness.Left)
+            {
+                leftChildHand.localScale = Vector3.one;
+            }
+        }, false);
     }
 
-    private void Gesture_onTappedChanged(WindowsMRTappedGestureEvent obj)
+    private void SpatialInteraction_SourcePressed(SpatialInteractionManager sender, SpatialInteractionSourceEventArgs args)
     {
-        if (obj.state == GestureState.Started)
+        var item = args.State;
+        UnityEngine.WSA.Application.InvokeOnAppThread(() =>
         {
-            rightChildHand.localScale = Vector3.one * 0.5f;
-            leftChildHand.localScale = Vector3.one * 0.5f;
-        }
-        else if (obj.state == GestureState.Completed || obj.state == GestureState.Canceled)
-        {
-            rightChildHand.localScale = Vector3.one;
-            leftChildHand.localScale = Vector3.one;
-        }
+            if (item.Source.Handedness == SpatialInteractionSourceHandedness.Right)
+            {
+                rightChildHand.localScale = Vector3.one * 0.5f;
+            }
+            else if (item.Source.Handedness == SpatialInteractionSourceHandedness.Left)
+            {
+                leftChildHand.localScale = Vector3.one * 0.5f;
+            }
+        }, false);
     }
-
-    private void Update()
-    {
-        //var inputsubsystem = XRGeneralSettings.Instance.Manager.activeLoader.GetLoadedSubsystem<WindowsMRGestureSubsystem>();
-    }
+#endif
 }
